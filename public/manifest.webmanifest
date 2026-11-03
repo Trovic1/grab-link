@@ -1,0 +1,11 @@
+{
+  "name": "Grab",
+  "short_name": "Grab",
+  "description": "Save videos, pictures and MP3s from social media links.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0b0b0e",
+  "theme_color": "#0b0b0e",
+  "icons": [{ "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }],
+  "share_target": { "action": "/", "method": "GET", "params": { "title": "title", "text": "text", "url": "url" } }
+}

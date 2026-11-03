@@ -1,0 +1,5 @@
+fastapi
+yt-dlp[default,curl-cffi]
+imageio-ffmpeg
+httpx
+python-multipart

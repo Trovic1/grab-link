@@ -1,0 +1,73 @@
+name: Build Grab for PC
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install packages
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt uvicorn pyinstaller
+
+      - name: Get Deno (YouTube needs a JavaScript runtime)
+        shell: pwsh
+        run: |
+          Invoke-WebRequest https://github.com/denoland/deno/releases/latest/download/deno-x86_64-pc-windows-msvc.zip -OutFile deno.zip
+          Expand-Archive deno.zip -DestinationPath .
+          .\deno.exe --version
+
+      - name: Build Grab.exe
+        run: >
+          pyinstaller pc/run.py --name Grab --windowed --noconfirm --icon pc/grab.ico
+          --paths . --hidden-import app --add-data "public;public" --add-binary "deno.exe;."
+          --collect-all curl_cffi --collect-all yt_dlp_ejs --collect-all imageio_ffmpeg
+          --collect-submodules uvicorn --collect-all certifi
+
+      - name: Smoke test
+        shell: pwsh
+        run: |
+          $p = Start-Process dist\Grab\Grab.exe -PassThru
+          $ok = $false
+          for ($i = 0; $i -lt 60; $i++) {
+            try { $h = Invoke-RestMethod http://127.0.0.1:8765/api/health -TimeoutSec 2; $ok = $true; break } catch { Start-Sleep 1 }
+          }
+          if (-not $ok) { Get-Content "$env:LOCALAPPDATA\Grab\grab.log"; exit 1 }
+          $h | ConvertTo-Json
+          $r = Invoke-RestMethod "http://127.0.0.1:8765/api/info?mode=audio&url=https%3A%2F%2Fsoundcloud.com%2Fforss%2Fflickermood" -TimeoutSec 90
+          "Found: " + $r.items[0].title
+          Stop-Process $p -Force
+
+      - name: Build installer
+        shell: pwsh
+        env:
+          GRAB_VERSION: 1.0.${{ github.run_number }}
+        run: |
+          choco install innosetup -y --no-progress
+          & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" pc\installer.iss
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: GrabSetup
+          path: Output/GrabSetup.exe
+
+      - name: Publish as "latest" release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release delete latest --yes --cleanup-tag || true
+          gh release create latest Output/GrabSetup.exe --title "Grab for PC (build ${{ github.run_number }})" --notes "Download GrabSetup.exe and open it. Windows may say it protected your PC: click More info, then Run anyway." --latest

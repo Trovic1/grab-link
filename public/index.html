@@ -1,0 +1,483 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Grab</title>
+<meta name="description" content="Paste a link from X, TikTok, Instagram, YouTube, Pinterest and more. Grab saves the video, picture or MP3.">
+<meta name="theme-color" content="#0b0b0e">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="icon" href="/icon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0b0b0e; --ink:#f4f4f6; --mute:#a4a6b0; --dim:#6c6e78;
+  --card:#17181c; --card2:#212227; --line:#2e2f36;
+  --acc:#ff5a36; --acc2:#ff8a3d; --ok:#3ecf8e; --bad:#ff6b6b;
+  --r:16px;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 Roboto,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+button,input{font:inherit;color:inherit}
+a{color:var(--acc2)}
+.wrap{max-width:760px;margin:0 auto;padding:0 20px}
+header{display:flex;align-items:center;gap:12px;padding:22px 0 8px}
+.mark{width:38px;height:38px;border-radius:11px;background:linear-gradient(140deg,var(--acc),var(--acc2));display:grid;place-items:center;flex:none}
+.brand{font:800 24px/1 "Bricolage Grotesque",sans-serif;letter-spacing:-.02em}
+.brand small{font:500 12px Roboto,sans-serif;color:var(--dim);margin-left:8px;letter-spacing:.04em;text-transform:uppercase}
+header .sp{flex:1}
+.ghost{background:none;border:1px solid var(--line);border-radius:999px;padding:7px 14px;color:var(--mute);cursor:pointer;font-size:13px}
+.ghost:hover{color:var(--ink);border-color:#45464e}
+
+h1{font:800 clamp(34px,6vw,52px)/1.02 "Bricolage Grotesque",sans-serif;letter-spacing:-.035em;margin:34px 0 10px}
+h1 em{font-style:normal;background:linear-gradient(90deg,var(--acc),var(--acc2));-webkit-background-clip:text;background-clip:text;color:transparent}
+.lede{color:var(--mute);margin:0 0 26px;max-width:520px}
+
+.box{background:var(--card);border:1px solid var(--line);border-radius:22px;padding:14px;transition:border-color .2s,box-shadow .2s}
+.box.drag{border-color:var(--acc);box-shadow:0 0 0 4px rgba(255,90,54,.15)}
+.row{display:flex;gap:10px;align-items:center}
+.field{flex:1;display:flex;align-items:center;background:var(--bg);border:1px solid var(--line);border-radius:14px;padding:0 6px 0 16px;min-width:0}
+.field:focus-within{border-color:#4a4b53}
+#url{flex:1;min-width:0;background:none;border:0;outline:0;padding:15px 0;font-size:16px}
+#url::placeholder{color:var(--dim)}
+.paste{background:var(--card2);border:0;border-radius:10px;padding:8px 12px;cursor:pointer;color:var(--mute);font-size:13px;font-weight:500}
+.paste:hover{color:var(--ink)}
+.go{background:linear-gradient(140deg,var(--acc),var(--acc2));border:0;border-radius:14px;padding:0 24px;height:52px;font-weight:700;font-size:16px;color:#160904;cursor:pointer;flex:none}
+.go:hover{filter:brightness(1.07)}
+.go:active{transform:translateY(1px)}
+.opts{display:flex;flex-wrap:wrap;gap:10px 18px;align-items:center;margin-top:12px;padding:0 4px}
+.seg{display:inline-flex;background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:3px}
+.seg button{background:none;border:0;border-radius:9px;padding:7px 14px;cursor:pointer;color:var(--mute);font-weight:500;font-size:14px;display:flex;align-items:center;gap:7px}
+.seg button[aria-pressed=true]{background:var(--card2);color:var(--ink)}
+.seg button[aria-pressed=true] svg{color:var(--acc2)}
+.sw{display:flex;align-items:center;gap:9px;cursor:pointer;color:var(--mute);font-size:13.5px;user-select:none}
+.sw input{appearance:none;width:34px;height:20px;border-radius:999px;background:var(--card2);border:1px solid var(--line);position:relative;cursor:pointer;margin:0;flex:none;transition:background .15s}
+.sw input::after{content:"";position:absolute;top:2px;left:2px;width:14px;height:14px;border-radius:50%;background:var(--dim);transition:transform .15s,background .15s}
+.sw input:checked{background:rgba(255,90,54,.25);border-color:rgba(255,90,54,.5)}
+.sw input:checked::after{transform:translateX(14px);background:var(--acc2)}
+.hint{color:var(--dim);font-size:13px;margin:12px 4px 0}
+kbd{font:500 12px Roboto,sans-serif;background:var(--card2);border:1px solid var(--line);border-bottom-width:2px;border-radius:6px;padding:1px 6px;color:var(--mute)}
+
+h2{font:600 19px "Bricolage Grotesque",sans-serif;margin:38px 0 12px;display:flex;align-items:center;gap:10px}
+h2 .sp{flex:1}
+h2 button{font-size:12.5px}
+
+.jobs{display:flex;flex-direction:column;gap:10px}
+.job{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:12px;display:flex;gap:14px;align-items:center;animation:in .25s ease-out}
+@keyframes in{from{opacity:0;transform:translateY(6px)}}
+.thumb{width:76px;height:76px;border-radius:11px;background:var(--card2) center/cover no-repeat;flex:none;display:grid;place-items:center;color:var(--dim);overflow:hidden}
+.thumb img{width:100%;height:100%;object-fit:cover}
+.meta{flex:1;min-width:0}
+.t{font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.s{font-size:13px;color:var(--mute);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px}
+.bar{height:4px;border-radius:4px;background:var(--card2);margin-top:9px;overflow:hidden}
+.bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--acc),var(--acc2));border-radius:4px;transition:width .2s}
+.bar.indet i{width:35%;animation:slide 1.1s infinite ease-in-out}
+@keyframes slide{from{transform:translateX(-100%)}to{transform:translateX(290%)}}
+.state{font-size:12px;font-weight:700;letter-spacing:.03em;text-transform:uppercase}
+.state.ok{color:var(--ok)} .state.bad{color:var(--bad)} .state.skip{color:var(--dim)} .state.run{color:var(--acc2)}
+.acts{display:flex;gap:6px;flex:none}
+.mini{background:var(--card2);border:0;border-radius:10px;padding:8px 12px;font-size:13px;font-weight:500;cursor:pointer;color:var(--ink);white-space:nowrap}
+.mini:hover{background:#2b2c33}
+.tag{display:inline-block;font-size:11px;font-weight:700;color:var(--acc2);background:rgba(255,138,61,.12);border-radius:6px;padding:1px 6px;margin-right:6px;vertical-align:1px}
+.empty{color:var(--dim);font-size:14px;padding:6px 2px}
+
+.ways{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+.way{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:16px}
+.way b{display:block;font:600 15px "Bricolage Grotesque",sans-serif;margin-bottom:4px}
+.way p{margin:0;color:var(--mute);font-size:13.5px}
+.bm{display:inline-block;margin-top:10px;background:linear-gradient(140deg,var(--acc),var(--acc2));color:#160904;font-weight:700;text-decoration:none;border-radius:10px;padding:7px 12px;font-size:13px;cursor:grab}
+.ytnote{display:flex;gap:10px;align-items:center;margin-top:12px;padding:11px 14px;border-radius:14px;background:rgba(255,138,61,.08);border:1px solid rgba(255,138,61,.22);color:var(--mute);text-decoration:none;font-size:13.5px}
+.ytnote svg{color:var(--acc2);flex:none}
+.ytnote b{color:var(--ink)}
+.ytnote:hover{border-color:rgba(255,138,61,.45)}
+.sub{color:var(--mute);margin:-4px 0 14px;font-size:14px}
+.apps{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+.app{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:18px}
+.apphead{display:flex;gap:12px;align-items:center;margin-bottom:14px}
+.apphead svg{color:var(--acc2);flex:none}
+.apphead b{display:block;font:600 17px "Bricolage Grotesque",sans-serif}
+.apphead span{color:var(--dim);font-size:12.5px}
+.dl{display:block;text-align:center;background:linear-gradient(140deg,var(--acc),var(--acc2));color:#160904;font-weight:700;text-decoration:none;border-radius:12px;padding:12px}
+.dl:hover{filter:brightness(1.07)}
+.app ol{margin:14px 0 0;padding-left:20px;color:var(--mute);font-size:13.5px}
+.app li{margin-bottom:5px}
+.app li b{color:var(--ink);font-weight:500}
+.local .ytnote,.local #get,.local #get + .sub,.local .apps{display:none}
+footer{color:var(--dim);font-size:12.5px;padding:40px 0 50px;line-height:1.7}
+
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(20px);background:#26272d;border:1px solid var(--line);color:var(--ink);padding:11px 16px;border-radius:12px;font-size:14px;opacity:0;pointer-events:none;transition:.2s;display:flex;gap:14px;align-items:center;max-width:calc(100% - 32px);z-index:9}
+.toast.on{opacity:1;transform:translateX(-50%);pointer-events:auto}
+.toast button{background:none;border:0;color:var(--acc2);font-weight:700;cursor:pointer;padding:0}
+
+@media (max-width:600px){
+  .row{flex-wrap:wrap}
+  .go{width:100%}
+  .ways,.apps{grid-template-columns:1fr}
+  .thumb{width:60px;height:60px}
+  .job{flex-wrap:wrap}
+  .acts{width:100%;justify-content:flex-end}
+  h1{margin-top:20px}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="mark" aria-hidden="true">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#160904" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11"/><path d="m6.5 10 5.5 5.5 5.5-5.5"/><path d="M5 20h14"/></svg>
+    </div>
+    <div class="brand">Grab<small id="where">web</small></div>
+    <div class="sp"></div>
+    <button class="ghost" id="installBtn" hidden>Install app</button>
+  </header>
+
+  <h1>Copy a link.<br><em>Keep the video.</em></h1>
+  <p class="lede">X, TikTok, Instagram, YouTube, Pinterest, Facebook, Reddit, Threads, SoundCloud and more. Save the video, the picture, or just the sound as an MP3.</p>
+
+  <form class="box" id="form" autocomplete="off">
+    <div class="row">
+      <div class="field">
+        <input id="url" type="text" inputmode="url" placeholder="Paste a link (or several)" aria-label="Link">
+        <button type="button" class="paste" id="pasteBtn">Paste</button>
+      </div>
+      <button class="go" id="goBtn" type="submit">Grab</button>
+    </div>
+    <div class="opts">
+      <div class="seg" role="group" aria-label="What to save">
+        <button type="button" data-mode="video" aria-pressed="true">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="13" height="14" rx="3"/><path d="m16 10 5-3v10l-5-3"/></svg>Video / picture</button>
+        <button type="button" data-mode="audio" aria-pressed="false">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/></svg>MP3 audio</button>
+      </div>
+      <label class="sw"><input type="checkbox" id="mediaOnly" checked>Only video &amp; audio links</label>
+      <label class="sw" id="autoWrap"><input type="checkbox" id="autoGrab">Auto-grab copied links</label>
+    </div>
+    <p class="hint">Tip: press <kbd>Ctrl</kbd> <kbd>V</kbd> anywhere on this page, or drag a link onto the box.</p>
+  </form>
+
+  <a class="ytnote" href="#get" id="ytnote">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11"/><path d="m6.5 10 5.5 5.5 5.5-5.5"/><path d="M5 20h14"/></svg>
+    <span><b>YouTube?</b> It blocks websites like this one. Get the free Grab app and it works.</span>
+  </a>
+
+  <h2 id="nowH" hidden>Downloading</h2>
+  <div class="jobs" id="jobs"></div>
+
+  <h2>Recent <span class="sp"></span><button class="ghost" id="clearBtn">Clear</button></h2>
+  <div class="jobs" id="history"></div>
+
+  <h2 id="get">Get the Grab app</h2>
+  <p class="sub">The app downloads through your own internet, so YouTube works too, in up to 1080p. Free, no account.</p>
+  <div class="apps">
+    <div class="app">
+      <div class="apphead">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor"><path d="M3 5.5 10 4.5v7H3zM11 4.4 21 3v8.5H11zM3 12.5h7v7l-7-1zM11 12.5h10V21l-10-1.4z"/></svg>
+        <div><b>Windows</b><span>Windows 10 and 11</span></div>
+      </div>
+      <a class="dl" id="dlPc" href="https://github.com/Trovic1/grab-link/releases/latest/download/GrabSetup.exe">Download for Windows</a>
+      <ol>
+        <li>Open <b>GrabSetup.exe</b>.</li>
+        <li>If Windows says it “protected your PC”, click <b>More info</b>, then <b>Run anyway</b>. That shows for any new app that isn't from a big company.</li>
+        <li>Click the <b>Grab</b> icon on your desktop. It opens in your browser.</li>
+      </ol>
+    </div>
+    <div class="app">
+      <div class="apphead">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor"><path d="M17.5 9.3 19.3 6a.4.4 0 0 0-.7-.4l-1.8 3.3a11 11 0 0 0-9.6 0L5.4 5.6a.4.4 0 1 0-.7.4l1.8 3.3A10 10 0 0 0 2 17h20a10 10 0 0 0-4.5-7.7ZM7.5 14.2a1 1 0 1 1 0-2 1 1 0 0 1 0 2Zm9 0a1 1 0 1 1 0-2 1 1 0 0 1 0 2Z"/></svg>
+        <div><b>Android</b><span>Android 8 and newer</span></div>
+      </div>
+      <a class="dl" id="dlAndroid" href="https://github.com/Trovic1/grab-android/releases/latest/download/Grab.apk">Download for Android</a>
+      <ol>
+        <li>Open <b>Grab.apk</b> from your downloads.</li>
+        <li>If asked, allow your browser to install apps, then tap <b>Install</b>.</li>
+        <li>In any app, tap <b>Share → Grab</b>, or copy a link and open Grab.</li>
+      </ol>
+    </div>
+  </div>
+
+  <h2>Faster ways in the browser</h2>
+  <div class="ways">
+    <div class="way"><b>Paste anywhere</b><p>Copy a link, click this tab, press <kbd>Ctrl</kbd> <kbd>V</kbd>. No need to click the box.</p></div>
+    <div class="way"><b>Auto-grab</b><p>Turn on “Auto-grab copied links”. When you come back to this tab, the link you copied downloads by itself.</p></div>
+    <div class="way"><b>One-click button</b><p>Drag this to your bookmarks bar. On any post, click it to grab that page.</p><a class="bm" id="bm" href="#" title="Drag me to your bookmarks bar">Grab this</a></div>
+    <div class="way"><b>Install it</b><p>In Chrome or Edge, use “Install app” at the top. Grab gets its own window and, on Android, shows up in the Share menu.</p></div>
+  </div>
+
+  <footer>
+    Grab finds the file the post already shows and hands it to your browser. Private posts and some sites that block servers won't work.
+    Only save things you have the right to keep.
+  </footer>
+</div>
+<div class="toast" id="toast"><span id="toastMsg"></span><button id="toastAct" hidden></button></div>
+
+<script src="/linkfilter.js"></script>
+<script>
+(() => {
+  const $ = s => document.querySelector(s);
+  const store = {
+    get(k, d) { try { const v = localStorage.getItem("grab." + k); return v === null ? d : JSON.parse(v); } catch { return d; } },
+    set(k, v) { try { localStorage.setItem("grab." + k, JSON.stringify(v)); } catch {} },
+  };
+
+  // ---------- settings ----------
+  let mode = store.get("mode", "video");
+  const mediaOnly = $("#mediaOnly"), autoGrab = $("#autoGrab");
+  mediaOnly.checked = store.get("mediaOnly", true);
+  autoGrab.checked = store.get("autoGrab", false);
+  mediaOnly.onchange = () => store.set("mediaOnly", mediaOnly.checked);
+  autoGrab.onchange = async () => {
+    store.set("autoGrab", autoGrab.checked);
+    if (autoGrab.checked) { await checkClipboard(true); }
+  };
+  if (!navigator.clipboard || !navigator.clipboard.readText) { $("#autoWrap").hidden = true; $("#pasteBtn").hidden = true; }
+
+  function setMode(m) {
+    mode = m; store.set("mode", m);
+    document.querySelectorAll(".seg button").forEach(b => b.setAttribute("aria-pressed", b.dataset.mode === m));
+  }
+  document.querySelectorAll(".seg button").forEach(b => b.onclick = () => setMode(b.dataset.mode));
+  setMode(mode);
+
+  // ---------- toast ----------
+  let toastTimer;
+  function toast(msg, actLabel, act) {
+    $("#toastMsg").textContent = msg;
+    const btn = $("#toastAct");
+    btn.hidden = !actLabel; btn.textContent = actLabel || "";
+    btn.onclick = () => { $("#toast").classList.remove("on"); act && act(); };
+    $("#toast").classList.add("on");
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => $("#toast").classList.remove("on"), actLabel ? 6000 : 3200);
+  }
+
+  // ---------- history ----------
+  let history = store.get("history", []);
+  const saveHistory = () => { history = history.slice(0, 40); store.set("history", history); renderHistory(); };
+  function short(u) { try { const x = new URL(u); return x.hostname.replace(/^www\./, "") + x.pathname.slice(0, 40); } catch { return u; } }
+  function ago(t) {
+    const s = (Date.now() - t) / 1000;
+    if (s < 60) return "just now"; if (s < 3600) return Math.floor(s / 60) + " min ago";
+    if (s < 86400) return Math.floor(s / 3600) + " h ago"; return new Date(t).toLocaleDateString();
+  }
+  function renderHistory() {
+    const box = $("#history"); box.innerHTML = "";
+    const done = history.filter(h => !h.live);
+    if (!done.length) { box.innerHTML = '<div class="empty">Nothing grabbed yet.</div>'; return; }
+    for (const h of done) {
+      const el = card(h.thumb, h.mode);
+      const st = { done: ["ok", "Saved"], failed: ["bad", "Failed"], skipped: ["skip", "Skipped"] }[h.state] || ["skip", h.state];
+      el.querySelector(".t").innerHTML = (h.mode === "audio" ? '<span class="tag">MP3</span>' : "") + esc(h.title || short(h.url));
+      el.querySelector(".s").innerHTML = `<span class="state ${st[0]}">${st[1]}</span> · ${esc(h.msg || short(h.url))} · ${ago(h.time)}`;
+      el.querySelector(".bar").remove();
+      const again = button(h.state === "done" ? "Again" : "Retry", () => grab(h.url, h.mode, true));
+      const open = button("Open post", () => window.open(h.url, "_blank", "noopener"));
+      el.querySelector(".acts").append(open, again);
+      box.append(el);
+    }
+  }
+  $("#clearBtn").onclick = () => { history = []; saveHistory(); };
+
+  // ---------- cards ----------
+  function esc(s) { return String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c])); }
+  function button(label, fn) { const b = document.createElement("button"); b.className = "mini"; b.textContent = label; b.onclick = fn; return b; }
+  const ICON_V = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="13" height="14" rx="3"/><path d="m16 10 5-3v10l-5-3"/></svg>';
+  const ICON_A = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/></svg>';
+  function card(thumb, m) {
+    const el = document.createElement("div");
+    el.className = "job";
+    el.innerHTML = `<div class="thumb">${m === "audio" ? ICON_A : ICON_V}</div>
+      <div class="meta"><div class="t"></div><div class="s"></div><div class="bar indet"><i></i></div></div><div class="acts"></div>`;
+    if (thumb) setThumb(el, thumb);
+    return el;
+  }
+  function setThumb(el, src) {
+    const img = new Image(); img.referrerPolicy = "no-referrer"; img.alt = "";
+    img.onload = () => { const t = el.querySelector(".thumb"); t.innerHTML = ""; t.append(img); };
+    img.src = src;
+  }
+  function mb(n) { return n >= 1048576 ? (n / 1048576).toFixed(1) + " MB" : Math.max(1, Math.round(n / 1024)) + " KB"; }
+
+  // ---------- grabbing ----------
+  let lastHandled = store.get("lastHandled", "");
+  let isLocal = false;
+  const running = new Set();
+
+  function gate(url) { return mediaOnly.checked ? LinkFilter.quick(url) : "media"; }
+
+  function handleText(text, source) {
+    const links = LinkFilter.findLinks(text);
+    if (!links.length) { if (source !== "clip") toast("No link found in that text."); return 0; }
+    let n = 0;
+    for (const url of links) {
+      if (gate(url) === "not_media") {
+        toast(links.length > 1 ? "Skipped a link that isn't a video or audio post." : "Skipped. That link isn't a video or audio post.",
+          "Grab anyway", () => grab(url, mode, true));
+        continue;
+      }
+      grab(url, mode); n++;
+    }
+    return n;
+  }
+
+  async function grab(url, m, force) {
+    const key = m + "|" + url;
+    if (running.has(key)) return;
+    running.add(key);
+    lastHandled = url; store.set("lastHandled", url);
+    $("#nowH").hidden = false;
+    const el = card(null, m);
+    const t = el.querySelector(".t"), s = el.querySelector(".s"), bar = el.querySelector(".bar");
+    t.innerHTML = (m === "audio" ? '<span class="tag">MP3</span>' : "") + esc(short(url));
+    s.innerHTML = '<span class="state run">Checking</span> · finding the media';
+    $("#jobs").prepend(el);
+
+    const rec = { id: Date.now() + Math.random(), url, mode: m, state: "running", time: Date.now() };
+    const finish = (state, msg, title, thumb) => {
+      Object.assign(rec, { state, msg, time: Date.now() });
+      if (title) rec.title = title; if (thumb) rec.thumb = thumb;
+      history = [rec, ...history.filter(h => !(h.url === url && h.mode === m))];
+      saveHistory();
+      running.delete(key);
+      setTimeout(() => { el.style.transition = "opacity .3s"; el.style.opacity = "0"; setTimeout(() => { el.remove(); if (!$("#jobs").children.length) $("#nowH").hidden = true; }, 300); }, state === "done" ? 2500 : 6000);
+    };
+
+    let info;
+    try {
+      const r = await fetch(`/api/info?mode=${m}&url=${encodeURIComponent(url)}`);
+      info = await r.json();
+      if (!r.ok) throw Object.assign(new Error(info.error || info.detail || "Couldn't grab that one."), { unknownSite: true });
+    } catch (e) {
+      const notMedia = /isn't a video/.test(e.message);
+      const skipped = notMedia && mediaOnly.checked && !force;
+      bar.remove();
+      const yt = !isLocal && /(^|\.)(youtube\.com|youtu\.be)$/i.test((() => { try { return new URL(url).hostname; } catch { return ""; } })());
+      const msg = yt ? "YouTube blocks websites. Get the free Grab app below and it works." : e.message;
+      s.innerHTML = `<span class="state ${skipped ? "skip" : "bad"}">${skipped ? "Skipped" : "Failed"}</span> · ${esc(msg)}`;
+      if (yt) el.querySelector(".acts").append(button("Get the app", () => $("#get").scrollIntoView({ behavior: "smooth" })));
+      el.querySelector(".acts").append(button("Retry", () => { el.remove(); grab(url, m, true); }));
+      finish(skipped ? "skipped" : "failed", skipped ? "Not a video or audio link" : e.message);
+      return;
+    }
+
+    const items = info.items || [];
+    const first = items[0] || {};
+    t.innerHTML = (m === "audio" ? '<span class="tag">MP3</span>' : "") + esc(info.title || first.title || short(url));
+    if (first.thumb) setThumb(el, first.thumb);
+
+    let ok = 0, lastErr = "";
+    for (let i = 0; i < items.length; i++) {
+      const it = items[i];
+      const label = items.length > 1 ? `${i + 1} of ${items.length} · ` : "";
+      try {
+        await download(it, (got, total) => {
+          bar.classList.toggle("indet", !total);
+          if (total) bar.firstChild.style.width = Math.min(100, (got / total) * 100) + "%";
+          s.innerHTML = `<span class="state run">${m === "audio" ? "Converting" : "Downloading"}</span> · ${label}${mb(got)}${total ? " of " + mb(total) : ""}`;
+        });
+        ok++;
+      } catch (e) { lastErr = e.message; }
+    }
+    bar.remove();
+    const kind = m === "audio" ? "MP3" : items.length > 1 ? `${ok} files` : (first.media === "image" ? "Picture" : "Video");
+    if (ok) {
+      s.innerHTML = `<span class="state ok">Saved</span> · ${kind} in your Downloads folder`;
+      finish("done", `${kind} · ${info.site || ""}`.replace(/ · $/, ""), info.title || first.title, first.thumb);
+    } else {
+      s.innerHTML = `<span class="state bad">Failed</span> · ${esc(lastErr)}`;
+      el.querySelector(".acts").append(button("Retry", () => { el.remove(); grab(url, m, true); }));
+      finish("failed", lastErr, info.title || first.title, first.thumb);
+    }
+  }
+
+  async function download(item, onProgress) {
+    const body = new FormData(); body.append("token", item.token);
+    const r = await fetch("/api/file", { method: "POST", body });
+    if (!r.ok) { let msg = "The site refused the download."; try { msg = (await r.json()).detail || msg; } catch {} throw new Error(msg); }
+    const total = +r.headers.get("content-length") || 0;
+    const name = decodeURIComponent(r.headers.get("x-grab-name") || "grab");
+    const reader = r.body.getReader(); const parts = []; let got = 0;
+    for (;;) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      parts.push(value); got += value.length; onProgress(got, total);
+    }
+    if (got < 1024) throw new Error("The site sent back an empty file.");
+    const blob = new Blob(parts, { type: r.headers.get("content-type") || "application/octet-stream" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob); a.download = name;
+    document.body.append(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 60000);
+  }
+
+  // ---------- inputs ----------
+  $("#form").onsubmit = e => {
+    e.preventDefault();
+    const v = $("#url").value.trim();
+    if (!v) { $("#url").focus(); return; }
+    const links = LinkFilter.findLinks(v);
+    if (!links.length) { toast("That doesn't look like a link."); return; }
+    links.forEach(u => grab(u, mode, true)); // typed / pasted by hand: always try
+    $("#url").value = "";
+  };
+  $("#pasteBtn").onclick = async () => {
+    try { const txt = await navigator.clipboard.readText(); $("#url").value = txt.trim(); $("#url").focus(); }
+    catch { toast("Your browser blocked clipboard access. Press Ctrl+V in the box instead."); }
+  };
+  document.addEventListener("paste", e => {
+    if (e.target === $("#url")) return;
+    const txt = (e.clipboardData || window.clipboardData).getData("text");
+    if (txt) { e.preventDefault(); handleText(txt, "paste"); }
+  });
+  const box = $("#form");
+  ["dragenter", "dragover"].forEach(ev => document.addEventListener(ev, e => { e.preventDefault(); box.classList.add("drag"); }));
+  ["dragleave", "drop"].forEach(ev => document.addEventListener(ev, e => { if (ev === "dragleave" && e.relatedTarget) return; box.classList.remove("drag"); }));
+  document.addEventListener("drop", e => {
+    e.preventDefault();
+    const txt = e.dataTransfer.getData("text/uri-list") || e.dataTransfer.getData("text/plain");
+    if (txt) handleText(txt, "drop");
+  });
+
+  async function checkClipboard(fromToggle) {
+    if (!autoGrab.checked || !navigator.clipboard?.readText) return;
+    try {
+      const txt = await navigator.clipboard.readText();
+      const link = LinkFilter.findLinks(txt)[0];
+      if (!link || link === lastHandled) { if (fromToggle) toast("Auto-grab is on. Copy a link, then come back to this tab."); return; }
+      if (gate(link) === "not_media") {
+        lastHandled = link; store.set("lastHandled", link);
+        toast("Copied link isn't a video or audio post, skipped.", "Grab anyway", () => grab(link, mode, true));
+        return;
+      }
+      grab(link, mode);
+    } catch {
+      if (fromToggle) toast("Allow clipboard access when your browser asks, so Grab can see copied links.");
+    }
+  }
+  window.addEventListener("focus", () => checkClipboard(false));
+  document.addEventListener("visibilitychange", () => { if (!document.hidden) checkClipboard(false); });
+
+  // ---------- links shared in (?url= from bookmark button or the Share menu) ----------
+  const qs = new URLSearchParams(location.search);
+  const shared = [qs.get("url"), qs.get("text"), qs.get("title")].filter(Boolean).join(" ");
+  if (qs.get("mode") === "audio" || qs.get("mode") === "video") setMode(qs.get("mode"));
+  if (shared) { window.history.replaceState(null, "", "/"); handleText(shared, "share"); }
+  else if (document.hasFocus()) checkClipboard(false);
+
+  // ---------- bookmark button + install ----------
+  $("#bm").href = `javascript:(()=>{window.open('${location.origin}/?url='+encodeURIComponent(location.href),'_blank')})()`;
+  $("#bm").onclick = e => { e.preventDefault(); toast("Drag this button to your bookmarks bar."); };
+  let installEvt;
+  window.addEventListener("beforeinstallprompt", e => { e.preventDefault(); installEvt = e; $("#installBtn").hidden = false; });
+  $("#installBtn").onclick = async () => { if (!installEvt) return; installEvt.prompt(); await installEvt.userChoice; $("#installBtn").hidden = true; };
+  if ("serviceWorker" in navigator) navigator.serviceWorker.register("/sw.js").catch(() => {});
+
+  fetch("/api/health").then(r => r.json()).then(h => { if (h.local) { $("#where").textContent = "on this PC"; document.body.classList.add("local"); isLocal = true; } }).catch(() => {});
+  renderHistory();
+})();
+</script>
+</body>
+</html>

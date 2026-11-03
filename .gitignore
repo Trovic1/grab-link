@@ -1,0 +1,8 @@
+.vercel
+.env*
+__pycache__/
+build/
+dist/
+Output/
+*.spec
+grab.log
