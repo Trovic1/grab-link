@@ -1,5 +1,5 @@
 fastapi
-yt-dlp[default,curl-cffi]
+yt-dlp[default,curl-cffi]==2026.10.26
 imageio-ffmpeg
 httpx
 python-multipart

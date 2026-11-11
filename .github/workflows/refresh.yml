@@ -1,0 +1,39 @@
+name: Keep the downloader up to date
+
+# Sites change often. Once a week, if a newer yt-dlp is out, pin it in requirements.txt.
+# That push redeploys the website on Vercel, and this job also rebuilds GrabSetup.exe.
+
+on:
+  schedule:
+    - cron: "17 6 * * 1"   # Mondays 06:17 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: write
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Pin the latest yt-dlp
+        id: pin
+        run: |
+          latest=$(curl -s https://pypi.org/pypi/yt-dlp/json | python3 -c "import json,sys;print(json.load(sys.stdin)['info']['version'])")
+          current=$(grep -oP 'yt-dlp\[[^]]*\]==\K\S+' requirements.txt)
+          echo "current=$current latest=$latest"
+          if [ -z "$latest" ] || [ "$latest" = "$current" ]; then echo "changed=no" >> "$GITHUB_OUTPUT"; exit 0; fi
+          sed -i "s/^yt-dlp\[default,curl-cffi\]==.*/yt-dlp[default,curl-cffi]==$latest/" requirements.txt
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -am "Update yt-dlp to $latest"
+          git push
+          echo "changed=yes" >> "$GITHUB_OUTPUT"
+
+      - name: Rebuild the Windows installer
+        if: steps.pin.outputs.changed == 'yes'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run pc.yml --ref main
